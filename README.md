@@ -1,14 +1,14 @@
 # Jekyll CO₂
 
-Written by [William Denton](https://www.miskatonic.org)/
+Written by [William Denton](https://www.miskatonic.org/).
 
-This is a plugin for [Jekyll](http://jekyllrb.com/) to show the change in atmospheric CO₂ at the Mauna Loa observatory in Hawaii.  It was inspired by [CO2Now](http://co2now.org/).
+This is a plugin for the static web site generator [Jekyll](http://jekyllrb.com/) to show the change in atmospheric CO₂ at the Mauna Loa observatory in Hawaii.  It was inspired by [CO2Now](http://co2now.org/).
 
 The data comes from the [NOAA's Earth System Research Laboratory](http://www.esrl.noaa.gov/gmd/ccgg/trends/).
 
 ## How to install
 
-Download the `co2.rb` file and put it in your `_plugins` directory.
+Download `co2.rb` and put it in your `_plugins` directory.  That's all!
 
 ## How to use
 
