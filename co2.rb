@@ -27,10 +27,6 @@ module Jekyll
   class RenderCO2Tag < Liquid::Tag
 
     def initialize(tag_name, text, tokens)
-      super
-    end
-
-    def render(context)
 
       # See http://www.esrl.noaa.gov/gmd/ccgg/trends/ for additional details.
       mlo_data = "ftp://aftp.cmdl.noaa.gov/products/trends/co2/co2_mm_mlo.txt"
@@ -40,6 +36,7 @@ module Jekyll
 
       begin
         open(mlo_data) do |f|
+          STDERR.puts "--- DOWNLOADING"
           raw = f.read
           raw.each_line do |line|
             next if /^#/.match(line)
@@ -76,7 +73,7 @@ module Jekyll
         # STDERR.puts "CO₂ in #{last_year} was #{data[last_year]["interpolated"]}"
         # STDERR.puts "CO₂ in #{two_years_ago} was #{data[two_years_ago]["interpolated"]}"
 
-        co2_html = <<HTML
+        @co2_html = <<HTML
 <div id="co2">
 <span class="co2_head">Atmospheric CO₂ at Mauna Loa:</span>
 <br>
@@ -91,11 +88,15 @@ module Jekyll
 HTML
 
       rescue Exception => e
-        co2_html = %Q{<div id="co2">Could not download data: #{e}"</div>}
+        @co2_html = %Q{<div id="co2">Could not download data: #{e}"</div>}
       end
 
-      co2_html
+      super
 
+    end
+
+    def render(context)
+      @co2_html
     end
 
   end
