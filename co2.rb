@@ -85,11 +85,14 @@ module Jekyll
 
         co2_html = <<HTML
 <div id="co2">
-<span class="co2_head">Atmospheric CO₂ at Mauna Loa:</span> <br>
-#{latest_month}: #{data[latest_month]["interpolated"]} ppm. <br>
-#{last_year}: #{data[last_year]["interpolated"]} ppm. <br>
-#{two_years_ago}: #{data[two_years_ago]["interpolated"]} ppm.<br>
-<span id="co2_foot">(Monthly averages.)</span>
+<h2>CO₂</h2>
+<p><span class="co2_title">Atmospheric CO₂ at Mauna Loa (ppm)</span> </p>
+<p>
+#{latest_month}: #{data[latest_month]["interpolated"]} <br>
+#{last_year}: #{data[last_year]["interpolated"]} <br>
+#{two_years_ago}: #{data[two_years_ago]["interpolated"]}
+</p>
+<span class="co2_source">(<a href="http://www.esrl.noaa.gov/gmd/ccgg/trends/">Source</a>)</span>
 </div>
 HTML
 
@@ -98,7 +101,7 @@ HTML
         co2_html = %Q{<div id="co2">Could not download data: #{e}"</div>}
       end
 
-      co2_includes_file = site.source + "/_includes/" + "co2.html"
+      co2_includes_file = site.source + "/_includes/" + "co2.html" # More fun to make it co₂.html, but I bet that would cause problems
 
       begin
         File.open(co2_includes_file, "w") do |f|
