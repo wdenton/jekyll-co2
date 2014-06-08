@@ -21,21 +21,20 @@
 
 require 'date'
 require 'open-uri'
-require 'json'
+# require 'json'
 
 module Jekyll
 
   class CO2Generator < Generator
 
+    # This generator is safe from arbitrary code execution.
     safe true
+
+    # This generator should be passive with regard to its execution
     priority :low
 
     def generate(site)
 
-      # As the plugin documentation says, "Generators run after Jekyll
-      # has made an inventory of the existing content, and before the
-      # site is generated."
-      #
       # We get the data by downloading and parsing a text file, and we
       # only want to do this once.  Here we get the file and do some
       # work and build the chunk of HTML that will be added to any
@@ -48,7 +47,7 @@ module Jekyll
       # Store all the data here so we can easily pick out the three months we want later.
       data = Hash.new
 
-      co2_html = ""
+      @co2_html = ""
 
       begin
         open(mlo_data) do |f|
@@ -77,15 +76,15 @@ module Jekyll
         latest_month = (DateTime.now << 1).strftime("%Y-%m") # << 1 subtracts one month.
 
         if data.has_key? latest_month
-          last_year = (DateTime.now << 13).strftime("%Y-%m")
+          last_year     = (DateTime.now << 13).strftime("%Y-%m")
           two_years_ago = (DateTime.now << 25).strftime("%Y-%m")
         else
-          latest_month = (DateTime.now << 2).strftime("%Y-%m")
-          last_year = (DateTime.now << 14).strftime("%Y-%m")
+          latest_month  = (DateTime.now <<  2).strftime("%Y-%m")
+          last_year     = (DateTime.now << 14).strftime("%Y-%m")
           two_years_ago = (DateTime.now << 26).strftime("%Y-%m")
         end
 
-        co2_html = <<HTML
+        @co2_html = <<HTML
 <div id="co2">
 <span class="co2_head">Atmospheric CO₂ at Mauna Loa:</span> <br>
 #{latest_month}: #{data[latest_month]["interpolated"]} ppm. <br>
@@ -97,10 +96,10 @@ HTML
 
       rescue Exception => e
         Jekyll.logger warn "Could not download data: #{e}"
-        co2_html = %Q{<div id="co2">Could not download data: #{e}"</div>}
+        @co2_html = %Q{<div id="co2">Could not download data: #{e}"</div>}
       end
 
-      STDERR.puts co2_html
+      STDERR.puts @co2_html
 
     end
 
@@ -113,8 +112,7 @@ HTML
     end
 
     def render(context)
-      # See ... not much happening here.  Just give the HTML block created above.
-      "How do I get at the co2_html chunk?"
+      "How do I get at the co2_html chunk? Nothing will show here: #{@co2_html}"
     end
 
   end
