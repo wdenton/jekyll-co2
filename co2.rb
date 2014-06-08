@@ -21,7 +21,6 @@
 
 require 'date'
 require 'open-uri'
-require 'json'
 
 module Jekyll
 
@@ -96,15 +95,17 @@ HTML
 
       rescue Exception => e
         Jekyll.logger warn "Could not download data: #{e}"
-        @co2_html = %Q{<div id="co2">Could not download data: #{e}"</div>}
+        co2_html = %Q{<div id="co2">Could not download data: #{e}"</div>}
       end
 
       co2_includes_file = site.source + "/_includes/" + "co2.html"
 
-      STDERR.puts co2_includes_file
-
-      File.open(co2_includes_file, "w") do |f|
-        f.write co2_html
+      begin
+        File.open(co2_includes_file, "w") do |f|
+          f.write co2_html
+        end
+      rescue Exception => e
+        Jekyll.logger warn "Cannot write to #{co2_includes_file}: #{e}"
       end
 
     end
