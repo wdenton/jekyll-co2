@@ -72,6 +72,12 @@ module Jekyll
         # month before that (for example if it's 01 June, the May data
         # may not be processed yet, so we need to get April's).
 
+        def month_name(yyyymm)
+          (yyyy, mm) = yyyymm.split(/-/)
+          month = Date::MONTHNAMES[mm.to_i]
+          "#{month} #{yyyy}"
+        end
+
         latest_month = (DateTime.now << 1).strftime("%Y-%m") # << 1 subtracts one month.
 
         if data.has_key? latest_month
@@ -88,9 +94,9 @@ module Jekyll
 <h2>CO₂</h2>
 <p><span class="co2_title">Atmospheric CO₂ at Mauna Loa (ppm)</span> </p>
 <p>
-#{latest_month}: #{data[latest_month]["interpolated"]} <br>
-#{last_year}: #{data[last_year]["interpolated"]} <br>
-#{two_years_ago}: #{data[two_years_ago]["interpolated"]}
+#{month_name(latest_month)}: #{data[latest_month]["interpolated"]} <br>
+#{month_name(last_year)}: #{data[last_year]["interpolated"]} <br>
+#{month_name(two_years_ago)}: #{data[two_years_ago]["interpolated"]}
 </p>
 <span class="co2_source">(<a href="http://www.esrl.noaa.gov/gmd/ccgg/trends/">Source</a>)</span>
 </div>
