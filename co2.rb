@@ -21,7 +21,7 @@
 
 require 'date'
 require 'open-uri'
-# require 'json'
+require 'json'
 
 module Jekyll
 
@@ -47,7 +47,7 @@ module Jekyll
       # Store all the data here so we can easily pick out the three months we want later.
       data = Hash.new
 
-      @co2_html = ""
+      co2_html = ""
 
       begin
         open(mlo_data) do |f|
@@ -84,7 +84,7 @@ module Jekyll
           two_years_ago = (DateTime.now << 26).strftime("%Y-%m")
         end
 
-        @co2_html = <<HTML
+        co2_html = <<HTML
 <div id="co2">
 <span class="co2_head">Atmospheric CO₂ at Mauna Loa:</span> <br>
 #{latest_month}: #{data[latest_month]["interpolated"]} ppm. <br>
@@ -99,24 +99,16 @@ HTML
         @co2_html = %Q{<div id="co2">Could not download data: #{e}"</div>}
       end
 
-      STDERR.puts @co2_html
+      co2_includes_file = site.source + "/_includes/" + "co2.html"
 
-    end
+      STDERR.puts co2_includes_file
 
-  end
+      File.open(co2_includes_file, "w") do |f|
+        f.write co2_html
+      end
 
-  class RenderCO2Tag < Liquid::Tag
-
-    def initialize(tag_name, text, tokens)
-      super
-    end
-
-    def render(context)
-      "How do I get at the co2_html chunk? Nothing will show here: #{@co2_html}"
     end
 
   end
 
 end
-
-Liquid::Template.register_tag('co2', Jekyll::RenderCO2Tag)
