@@ -24,9 +24,23 @@ require 'open-uri'
 require 'json'
 
 module Jekyll
-  class RenderCO2Tag < Liquid::Tag
 
-    def initialize(tag_name, text, tokens)
+  class CO2Generator < Generator
+
+    safe true
+    priority :low
+
+    def generate(site)
+
+      # As the plugin documentation says, "Generators run after Jekyll
+      # has made an inventory of the existing content, and before the
+      # site is generated."
+      #
+      # We get the data by downloading and parsing a text file, and we
+      # only want to do this once.  Here we get the file and do some
+      # work and build the chunk of HTML that will be added to any
+      # web page with the {% co2 %} tag on it.  The actual Liquid tag,
+      # below, really doesn't do anything except output the HTML.
 
       # See http://www.esrl.noaa.gov/gmd/ccgg/trends/ for additional details.
       mlo_data = "ftp://aftp.cmdl.noaa.gov/products/trends/co2/co2_mm_mlo.txt"
@@ -34,9 +48,11 @@ module Jekyll
       # Store all the data here so we can easily pick out the three months we want later.
       data = Hash.new
 
+      co2_html = ""
+
       begin
         open(mlo_data) do |f|
-          STDERR.puts "--- DOWNLOADING"
+          # STDERR.puts "--- DOWNLOADING"
           raw = f.read
           raw.each_line do |line|
             next if /^#/.match(line)
@@ -69,39 +85,40 @@ module Jekyll
           two_years_ago = (DateTime.now << 26).strftime("%Y-%m")
         end
 
-        # STDERR.puts "CO₂ in #{latest_month} was #{data[latest_month]["interpolated"]}"
-        # STDERR.puts "CO₂ in #{last_year} was #{data[last_year]["interpolated"]}"
-        # STDERR.puts "CO₂ in #{two_years_ago} was #{data[two_years_ago]["interpolated"]}"
-
-        @co2_html = <<HTML
+        co2_html = <<HTML
 <div id="co2">
-<span class="co2_head">Atmospheric CO₂ at Mauna Loa:</span>
-<br>
-#{latest_month}: #{data[latest_month]["interpolated"]} ppm.
-<br>
-#{last_year}: #{data[last_year]["interpolated"]} ppm.
-<br>
-#{two_years_ago}: #{data[two_years_ago]["interpolated"]} ppm.
-<br>
+<span class="co2_head">Atmospheric CO₂ at Mauna Loa:</span> <br>
+#{latest_month}: #{data[latest_month]["interpolated"]} ppm. <br>
+#{last_year}: #{data[last_year]["interpolated"]} ppm. <br>
+#{two_years_ago}: #{data[two_years_ago]["interpolated"]} ppm.<br>
 <span id="co2_foot">(Monthly averages.)</span>
 </div>
 HTML
 
       rescue Exception => e
-        @co2_html = %Q{<div id="co2">Could not download data: #{e}"</div>}
+        Jekyll.logger warn "Could not download data: #{e}"
+        co2_html = %Q{<div id="co2">Could not download data: #{e}"</div>}
       end
 
-      super
+      STDERR.puts co2_html
 
     end
 
+  end
+
+  class RenderCO2Tag < Liquid::Tag
+
+    def initialize(tag_name, text, tokens)
+      super
+    end
+
     def render(context)
-      @co2_html
+      # See ... not much happening here.  Just give the HTML block created above.
+      "How do I get at the co2_html chunk?"
     end
 
   end
 
 end
-
 
 Liquid::Template.register_tag('co2', Jekyll::RenderCO2Tag)
