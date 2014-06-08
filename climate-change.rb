@@ -1,4 +1,6 @@
 #!/usr/bin/env ruby
+# -*- coding: utf-8 -*-
+# encoding: UTF-8
 
 require 'date'
 require 'open-uri'
@@ -30,23 +32,22 @@ rescue Exception => e
 end
 
 # Now we want to get the most recent month of data available
-# If it isn't the current month, step back 28 days.
-# That should always be enough.
+# It will never be the current month, because it's not over yet.
+# It will usually be the previous month, but it might be the
+# month before that (for example if it's 01 June, the May data
+# may not be processed yet, so we need to get April's).
 
-yyyymm = Date.today.strftime("%Y-%m")
+latest_month = (DateTime.now << 1).strftime("%Y-%m") # << 1 subtracts one month.
 
-if data.has_key? yyyymm
-  previous_year = (Date.today - 365).strftime("%Y-%m")
+if data.has_key? latest_month
+  last_year = (DateTime.now << 13).strftime("%Y-%m")
+  two_years_ago = (DateTime.now << 25).strftime("%Y-%m")
 else
-  yyyymm = (Date.today - 28).strftime("%Y-%m")
-  previous_year = (Date.today - 28 - 365 ).strftime("%Y-%m")
+  latest_month = (DateTime.now << 2).strftime("%Y-%m")
+  last_year = (DateTime.now << 14).strftime("%Y-%m")
+  two_years_ago = (DateTime.now << 26).strftime("%Y-%m")
 end
 
-puts yyyymm
-puts data[yyyymm]
-puts previous_year
-puts data[previous_year]
-
-annual_increase = 100 * data[yyyymm]["interpolated"].to_f / data[previous_year]["interpolated"].to_f
-
-puts annual_increase
+puts "CO₂ in #{latest_month} was #{data[latest_month]["interpolated"]}"
+puts "CO₂ in #{last_year} was #{data[last_year]["interpolated"]}"
+puts "CO₂ in #{two_years_ago} was #{data[two_years_ago]["interpolated"]}"
