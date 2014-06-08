@@ -107,6 +107,14 @@ HTML
         co2_html = %Q{<div id="co2">Could not download data: #{e}"</div>}
       end
 
+      # This approach is taken from the Stack Overflow question
+      #
+      # Avoid repeated calls to an API in Jekyll Ruby plugin
+      # https://stackoverflow.com/questions/15235023/avoid-repeated-calls-to-an-api-in-jekyll-ruby-plugin
+      #
+      # Dump the little chunk of HTML to the _includes directory, and then let it be
+      # included with {% include co2.html %} where desired.
+
       co2_includes_file = site.source + "/_includes/" + "co2.html" # More fun to make it co₂.html, but I bet that would cause problems
 
       begin
