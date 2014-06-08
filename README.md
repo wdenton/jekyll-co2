@@ -12,11 +12,11 @@ Download `co2.rb` and put it in your `_plugins` directory.  That's all!
 
 ## How to use
 
-The plugin creates an include file you can use: `_includes/co2.html`.  Include it in any web page like this:
+The plugin creates an include file: `_includes/co2.html`.  Include it in a web page like this:
 
     {% include co2.html %}
 
-When the page is rendered, the tag will be replaced by a short block of HTML that looks like this:
+When the page is rendered, the tag will be replaced by a short block of HTML that looks something like this:
 
     <div id="co2">
     <h2>CO₂</h2>
