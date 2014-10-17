@@ -44,7 +44,7 @@ module Jekyll
       mlo_data = "ftp://aftp.cmdl.noaa.gov/products/trends/co2/co2_mm_mlo.txt"
 
       # Store all the data here so we can easily pick out the three months we want later.
-      data = Hash.new
+      data = Hash.new { |h, k| h[k] = Hash.new } # So we can make a hash of hashes
 
       co2_html = ""
 
@@ -54,10 +54,11 @@ module Jekyll
           raw = f.read
           raw.each_line do |line|
             next if /^#/.match(line)
-            (year, month, decimal_date, interpolated, trend, days) = line.split("\s") # Splits nicely on multiple spaces
-            month = "%02d" % month # Add a leading zero if none exists
-            yyyymm = year + "-" + month
-            data[yyyymm] = {
+            (yyyy, month, decimal_date, interpolated, trend, days) = line.split("\s") # Splits nicely on multiple spaces
+            yyyy = yyyy.to_i
+            mm = ("%02d" % month) # Add a leading zero if none exists
+            # yyyymm = year + "-" + month #
+            data[yyyy][mm] = {
               "decimal_date" => decimal_date,
               "interpolated" => interpolated,
               "trend" => trend,
@@ -66,38 +67,53 @@ module Jekyll
           end
         end
 
+        # STDERR.puts data
+
         # Now we want to get the most recent month of data available
         # It will never be the current month, because it's not over yet.
         # It will usually be the previous month, but it might be the
         # month before that (for example if it's 01 June, the May data
         # may not be processed yet, so we need to get April's).
 
-        def month_name(yyyymm)
-          (yyyy, mm) = yyyymm.split(/-/)
-          month = Date::MONTHNAMES[mm.to_i]
-          "#{month} #{yyyy}"
+        def month_name(mm)
+          Date::MONTHNAMES[mm.to_i]
         end
 
-        latest_month = (DateTime.now << 1).strftime("%Y-%m") # << 1 subtracts one month.
+        # recen3t_data = (DateTime.now << 1).strftime("%Y-%m") # << 1 subtracts one month.
+        monthname = ""
+        latest_year = (DateTime.now << 1).strftime("%Y").to_i
+        latest_month = (DateTime.now << 1).strftime("%m") # Keep as string, need leading 0
 
-        if data.has_key? latest_month
-          last_year     = (DateTime.now << 13).strftime("%Y-%m")
-          two_years_ago = (DateTime.now << 25).strftime("%Y-%m")
+        mm = ''
+        yyyy = ''
+
+        if data[latest_year][latest_month]
+        # if data[yyyy][mm]
+          mm  = (DateTime.now << 1).strftime("%m") # << 1 subtracts one month.
+          monthname = month_name(mm)
+          yyyy  = (DateTime.now << 1).strftime("%Y").to_i # << 1 subtracts one month.
         else
-          latest_month  = (DateTime.now <<  2).strftime("%Y-%m")
-          last_year     = (DateTime.now << 14).strftime("%Y-%m")
-          two_years_ago = (DateTime.now << 26).strftime("%Y-%m")
+          mm  = (DateTime.now << 2).strftime("%m") # << 1 subtracts one month.
+          monthname = month_name(mm)
+          yyyy  = (DateTime.now << 2).strftime("%Y").to_i # << 1 subtracts one month.
         end
+
+        ticks = %w[▁ ▂ ▃ ▄ ▅ ▆ ▇]
+
+        values = [data[yyyy - 2][mm]["interpolated"], data[yyyy - 1][mm]["interpolated"], data[yyyy][mm]["interpolated"]]
+
+        years_to_sample = 20
+
+        # Sparklines taken from https://gist.github.com/jcromartie/1367091
+        values = (yyyy - years_to_sample .. yyyy).map{ |x| data[x][mm]["interpolated"]}
+        min, range, scale = values.min.to_f, values.max.to_f - values.min.to_f, ticks.length - 1
+        sparkline = values.map { |x| %Q(<span title="#{x}">#{ticks[(((x.to_f - min) / range) * scale).round]}</span>)}.join
 
         co2_html = <<HTML
 <div id="co2">
 <h2>CO₂</h2>
-<p><span class="co2_title">Atmospheric CO₂ at Mauna Loa (ppm)</span> </p>
-<p>
-#{month_name(latest_month)}: #{data[latest_month]["interpolated"]} <br>
-#{month_name(last_year)}: #{data[last_year]["interpolated"]} <br>
-#{month_name(two_years_ago)}: #{data[two_years_ago]["interpolated"]}
-</p>
+<span class="sparkline">#{sparkline}</span>
+<p><span class="co2_title">Atmospheric CO₂ at Mauna Loa (ppm) in #{monthname} over the last #{years_to_sample} years</span> </p>
 <span class="co2_source">(<a href="http://www.esrl.noaa.gov/gmd/ccgg/trends/">Source</a>)</span>
 </div>
 HTML
