@@ -2,9 +2,13 @@
 
 Written by [William Denton](https://www.miskatonic.org/).
 
-This is a plugin for the static web site generator [Jekyll](http://jekyllrb.com/) to show the change in atmospheric CO₂ at the Mauna Loa observatory in Hawaii.  It was inspired by [CO2Now](http://co2now.org/).
+This is a plugin for the static web site generator [Jekyll](http://jekyllrb.com/) to show the change in atmospheric CO₂ at the Mauna Loa observatory in Hawaii.  It was inspired by [CO2Now](http://co2now.org/). The data comes from the [NOAA's Earth System Research Laboratory](http://www.esrl.noaa.gov/gmd/ccgg/trends/).
 
-The data comes from the [NOAA's Earth System Research Laboratory](http://www.esrl.noaa.gov/gmd/ccgg/trends/).
+It shows the CO₂ concentrations for the latest known month (usually last month, but sometimes the month before that) over the last 15 years in a text sparkline that looks something like this: ▁▁▂▂▂▂▃▃▃▄▄▄▅▅▅▅▆▆▆▇▇.
+
+In a browser it looks like this:
+
+![Screenshot](screenshot.png)
 
 ## How to install
 
@@ -16,20 +20,14 @@ The plugin creates an include file: `_includes/co2.html`.  Include it in a web p
 
     {% include co2.html %}
 
-When the page is rendered, the tag will be replaced by a short block of HTML that looks something like this:
+When the page is rendered, the tag will be replaced by a short block of HTML like this:
 
     <div id="co2">
     <h2>CO₂</h2>
-    <p><span class="co2_title">Atmospheric CO₂ at Mauna Loa (ppm)</span> </p>
-    <p>
-    May 2014: 401.85 <br>
-    May 2013: 399.76 <br>
-    May 2012: 396.78
-    </p>
+    <span class="sparkline"><span title="355.63">▁</span>[13 years]<span title="395.28">▇</span></span>
+    <p><span class="co2_title">Atmospheric CO₂ at Mauna Loa (ppm) in September over the last 20 years</span> </p>
     <span class="co2_source">(<a href="http://www.esrl.noaa.gov/gmd/ccgg/trends/">Source</a>)</span>
     </div>
-
-It will show the CO₂ concentrations for the latest known month (usually last month, but sometimes the month before that) and same month from the previous year and two years before.
 
 You could style it with CSS like this:
 
@@ -39,6 +37,10 @@ You could style it with CSS like this:
     }
 
     #co2 .co2_title {
+    }
+
+    #co2 .sparkline {
+        font-size: smaller;
     }
 
     #co2 .co2_source {
