@@ -54,12 +54,13 @@ module Jekyll
           raw = f.read
           raw.each_line do |line|
             next if /^#/.match(line)
-            (yyyy, month, decimal_date, interpolated, trend, days) = line.split("\s") # Splits nicely on multiple spaces
+            (yyyy, month, decimal_date, average, interpolated, trend, days) = line.split("\s") # Splits nicely on multiple spaces
             yyyy = yyyy.to_i
             mm = ("%02d" % month) # Add a leading zero if none exists
             # yyyymm = year + "-" + month #
             data[yyyy][mm] = {
               "decimal_date" => decimal_date,
+              "average" => average,
               "interpolated" => interpolated,
               "trend" => trend,
               "days" => trend
@@ -79,16 +80,15 @@ module Jekyll
           Date::MONTHNAMES[mm.to_i]
         end
 
-        # recen3t_data = (DateTime.now << 1).strftime("%Y-%m") # << 1 subtracts one month.
         monthname = ""
-        latest_year = (DateTime.now << 1).strftime("%Y").to_i
+        latest_year = (DateTime.now << 1).strftime("%Y").to_i # Subtracts one year
         latest_month = (DateTime.now << 1).strftime("%m") # Keep as string, need leading 0
 
         mm = ''
         yyyy = ''
 
         if data[latest_year][latest_month]
-        # if data[yyyy][mm]
+          # if data[yyyy][mm]
           mm  = (DateTime.now << 1).strftime("%m") # << 1 subtracts one month.
           monthname = month_name(mm)
           yyyy  = (DateTime.now << 1).strftime("%Y").to_i # << 1 subtracts one month.
@@ -100,14 +100,15 @@ module Jekyll
 
         ticks = %w[▁ ▂ ▃ ▄ ▅ ▆ ▇]
 
-        values = [data[yyyy - 2][mm]["interpolated"], data[yyyy - 1][mm]["interpolated"], data[yyyy][mm]["interpolated"]]
+        # values = [data[yyyy - 2][mm]["interpolated"], data[yyyy - 1][mm]["interpolated"], data[yyyy][mm]["interpolated"]]
 
         years_to_sample = 20
 
         # Sparklines taken from https://gist.github.com/jcromartie/1367091
         values = (yyyy - years_to_sample .. yyyy).map{ |x| data[x][mm]["interpolated"]}
         min, range, scale = values.min.to_f, values.max.to_f - values.min.to_f, ticks.length - 1
-        sparkline = values.map { |x| %Q(<span title="#{x}">#{ticks[(((x.to_f - min) / range) * scale).round]}</span>)}.join
+        sparkline = values.map.with_index { |x, i| %Q(<span title="#{yyyy - (years_to_sample - i)}: #{x}">#{ticks[(((x.to_f - min) / range) * scale).round]}</span>)}.join
+        # sparkline = values.map { |x| %Q(<span title="#{x}">#{ticks[(((x.to_f - min) / range) * scale).round]}</span>)}.join
 
         co2_html = <<HTML
 <div id="co2">
