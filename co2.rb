@@ -114,8 +114,12 @@ module Jekyll
 <div id="co2">
 <h2>CO₂</h2>
 <span class="sparkline">#{sparkline}</span>
-<p><span class="co2_title">Atmospheric CO₂ at Mauna Loa (ppm) in #{monthname} over the last #{years_to_sample} years</span> </p>
-<span class="co2_source">(<a href="http://www.esrl.noaa.gov/gmd/ccgg/trends/">Source</a>)</span>
+<p><span class="co2_title">Atmospheric CO₂ at Mauna Loa (ppm) in #{monthname} over the last #{years_to_sample} years.</span> </p>
+<span class="co2_source">
+Sources:
+<a href="http://www.esrl.noaa.gov/gmd/ccgg/trends/">data</a>,
+<a href="https://github.com/wdenton/jekyll-co2">code</a>.
+</span>
 </div>
 HTML
 
