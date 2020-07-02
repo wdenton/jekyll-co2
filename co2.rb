@@ -56,9 +56,11 @@ module Jekyll
         File.open(mlo_csv, "wt") do |file|
           file << URI.open(mlo_csv_url).read.gsub(/^#.*\n/, "") # Strip all the comments.
         end
-      rescue Net::FTPTempError => e
-        Jekyll.logger warn "Could not download data: #{e}; using stored file"
-        exit
+      rescue StandardError => e
+        # TODO:  This doesn't work right.  Make it work even if NOAA site is down.
+        warn "Error on #{mlo_csv_url}: #{e}"
+        warn "Could not download data: using stored file"
+        exit 0
       end
 
       # Store all the data here so we can easily pick out the three
@@ -115,15 +117,16 @@ module Jekyll
       co2_html = <<~HTML
         <div id="co2">
           <h2>Atmospheric CO₂</h2>
+          <div id="co2_inside">
              <p>
               #{monthname} #{yyyy_then}: #{co2_then} ppm
               <br />
               #{monthname} #{yyyy}: #{co2_now} ppm
             </p>
             <p>
-              Increase: #{co2_increase} ppm
+              Increase: <span class="highlight">#{co2_increase} ppm</span>
               <br />
-              Change: #{co2_growth} %
+              Change: <span class="highlight">#{co2_growth} %</span>
             </p>
 
           <span class="co2_source">
@@ -131,6 +134,7 @@ module Jekyll
           <a href="http://www.esrl.noaa.gov/gmd/ccgg/trends/">data</a>,
           <a href="https://github.com/wdenton/jekyll-co2">code</a>.
           </span>
+        </div>
         </div>
       HTML
 
