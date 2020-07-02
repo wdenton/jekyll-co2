@@ -12,7 +12,7 @@ It is now text only, with no sparkline graphics.  In a browser it looks like thi
 
 Download `co2.rb` and put it in your `_plugins` directory.  That's all!
 
-This CSV file downloaded is stored in your `_data` directory.  If you don't have one, it will be created.
+The CSV file downloaded is stored in your `_data` directory.  If you don't have one, it will be created.
 
 ## How to use
 
