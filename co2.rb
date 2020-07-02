@@ -1,6 +1,5 @@
 #!/usr/bin/env ruby
-# -*- coding: utf-8 -*-
-# encoding: UTF-8
+# frozen_string_literal: true
 
 # This file is part of Jekyll CO₂
 #
@@ -23,13 +22,20 @@ require "date"
 require "open-uri"
 
 module Jekyll
-
+  # Here follows the plugin.
   class CO2Generator < Generator
     # This generator is safe from arbitrary code execution.
     safe true
 
     # This generator should be passive with regard to its execution
     priority :low
+
+    # Turn a month number (02) into a name (February).
+    def month_name(mmm)
+      Date::MONTHNAMES[mmm.to_i]
+    end
+
+    TICKS = %w[▁ ▂ ▃ ▄ ▅ ▆ ▇].freeze
 
     def generate(site)
       # We get the data by downloading and parsing a text file, and we
@@ -48,20 +54,21 @@ module Jekyll
       co2_html = ""
 
       begin
-        open(mlo_data) do |f|
+        URI.open(mlo_data) do |f|
           raw = f.read
           raw.each_line do |line|
             next if /^#/.match(line)
+
             (yyyy, month, decimal_date, average, interpolated, trend, days) = line.split("\s")
             yyyy = yyyy.to_i
-            mm = ("%02d" % month) # Add a leading zero if none exists
-            # yyyymm = year + "-" + month #
+            mm = format("%<name>02d", name: month) # Add a leading zero if none exists
+
             data[yyyy][mm] = {
               "decimal_date" => decimal_date,
               "average" => average,
               "interpolated" => interpolated,
               "trend" => trend,
-              "days" => trend
+              "days" => days
             }
           end
         end
@@ -75,10 +82,6 @@ module Jekyll
       # It will usually be the previous month, but it might be the
       # month before that (for example if it's 01 June, the May data
       # may not be processed yet, so we need to get April's).
-
-      def month_name(mm)
-        Date::MONTHNAMES[mm.to_i]
-      end
 
       monthname = ""
       latest_year = (DateTime.now << 1).strftime("%Y").to_i # Subtracts one year
@@ -98,28 +101,29 @@ module Jekyll
         yyyy = (DateTime.now << 2).strftime("%Y").to_i
       end
 
-      ticks = %w(▁ ▂ ▃ ▄ ▅ ▆ ▇)
-
       years_to_sample = 20
 
       # Sparklines taken from https://gist.github.com/jcromartie/1367091
       values = (yyyy - years_to_sample..yyyy).map { |x| data[x][mm]["interpolated"] }
-      min, range, scale = values.min.to_f, values.max.to_f - values.min.to_f, ticks.length - 1
-      sparkline = values.map.with_index { |x, i| %Q(<span title="#{yyyy - (years_to_sample - i)}: #{x}">#{ticks[(((x.to_f - min) / range) * scale).round]}</span>) }.join
-      # sparkline = values.map { |x| %Q(<span title="#{x}">#{ticks[(((x.to_f - min) / range) * scale).round]}</span>)}.join
+      min = values.min.to_f
+      range = values.max.to_f - values.min.to_f
+      scale = TICKS.length - 1
+      sparkline = values.map.with_index do |x, i|
+        %(<span title="#{yyyy - (years_to_sample - i)}: #{x}">#{TICKS[(((x.to_f - min) / range) * scale).round]}</span>)
+      end.join
 
-      co2_html = <<HTML
-<div id="co2">
-<h2>CO₂</h2>
-<span class="sparkline">#{sparkline}</span>
-<p><span class="co2_title">Atmospheric CO₂ at Mauna Loa (ppm) in #{monthname} over the last #{years_to_sample} years.</span> </p>
-<span class="co2_source">
-Sources:
-<a href="http://www.esrl.noaa.gov/gmd/ccgg/trends/">data</a>,
-<a href="https://github.com/wdenton/jekyll-co2">code</a>.
-</span>
-</div>
-HTML
+      co2_html = <<~HTML
+        <div id="co2">
+          <h2>CO₂</h2>
+          <span class="sparkline">#{sparkline}</span>
+          <p><span class="co2_title">Atmospheric CO₂ at Mauna Loa (ppm) in #{monthname} over the last #{years_to_sample} years.</span> </p>
+          <span class="co2_source">
+          Sources:
+          <a href="http://www.esrl.noaa.gov/gmd/ccgg/trends/">data</a>,
+          <a href="https://github.com/wdenton/jekyll-co2">code</a>.
+          </span>
+        </div>
+      HTML
 
       # This approach is taken from the Stack Overflow question
       #
