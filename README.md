@@ -4,7 +4,7 @@ Written by [William Denton](https://www.miskatonic.org/).
 
 This is a plugin for the static web site generator [Jekyll](http://jekyllrb.com/) to show the change in atmospheric CO₂ at the Mauna Loa observatory in Hawaii.  It was inspired by [CO2Now](http://co2now.org/). The data comes from the [NOAA's Earth System Research Laboratory](http://www.esrl.noaa.gov/gmd/ccgg/trends/).
 
-In a browser it looks like this:
+It is now text only, with no sparkline graphics.  In a browser it looks like this:
 
 ![Screenshot](screenshot.png)
 
