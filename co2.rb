@@ -62,14 +62,14 @@ module Jekyll
         exit 0
       end
 
-      # Store all the data here so we can easily pick out the three
-      # months we want.
+      # Set up the hash of hashes we'll use.
       co2_data = Hash.new { |h, k| h[k] = {} }
 
       CSV.foreach(mlo_csv, headers: true, header_converters: :symbol) do |row|
         yyyy = row[:year].to_i
         month_num = row[:month].to_i # January is 1, not 01
         co2_data[yyyy][month_num] = {
+          # Throw out the other fields.
           "interpolated" => row[:interpolated]
         }
       end
@@ -85,8 +85,8 @@ module Jekyll
       latest_month = (DateTime.now << 1).strftime("%m").to_i
 
       if co2_data[latest_year][latest_month]
-        month_now = latest_month # (DateTime.now << 1).strftime("%m").to_i
-        yyyy_now = latest_year # (DateTime.now << 1).strftime("%Y").to_i
+        month_now = latest_month
+        yyyy_now = latest_year
       else
         # << 2 subtracts two months.
         # Simplest to handle it this way in case we need to go back to
@@ -110,9 +110,7 @@ module Jekyll
       end
 
       co2_then = co2_data[yyyy_then][month_then]["interpolated"].to_f
-
       co2_now = co2_data[yyyy_now][month_now]["interpolated"].to_f
-
       co2_increase = (co2_now - co2_then).round(2)
       co2_growth = (100 * co2_increase / co2_then).round(1)
 
