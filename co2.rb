@@ -67,14 +67,10 @@ module Jekyll
       co2_data = Hash.new { |h, k| h[k] = {} }
 
       CSV.foreach(mlo_csv, headers: true, header_converters: :symbol) do |row|
-        yyyy = row[:year]
-        month_num = format("%<name>02d", name: row[:month]) # Add a leading zero if none exists
+        yyyy = row[:year].to_i
+        month_num = row[:month].to_i # January is 1, not 01
         co2_data[yyyy][month_num] = {
-          # "decimal_date" => row[:decimal_date],
-          # "average" => row[:average],
           "interpolated" => row[:interpolated]
-          # "trend" => row[:trend],
-          # "days" => row[:days]
         }
       end
 
@@ -86,34 +82,37 @@ module Jekyll
       # month before that (for example if it's 01 June, the May data
       # may not be processed yet, so we need to get April's).
       latest_year = (DateTime.now << 1).strftime("%Y").to_i # Subtracts one year
-      latest_month = (DateTime.now << 1).strftime("%m") # Keep as string, need leading 0
+      latest_month = (DateTime.now << 1).strftime("%m").to_i
 
       if co2_data[latest_year][latest_month]
         # << 1 subtracts one month.
-        month_now = (DateTime.now << 1).strftime("%m")
+        month_now = (DateTime.now << 1).strftime("%m").to_i
         yyyy_now = (DateTime.now << 1).strftime("%Y").to_i
       else
-        month_now = (DateTime.now << 2).strftime("%m")
+        month_now = (DateTime.now << 2).strftime("%m").to_i
         yyyy_now = (DateTime.now << 2).strftime("%Y").to_i
       end
 
       years_back = 50 # TODO: Move this default somewhere more sensible
       years_back = site.config["co2"]["years"].to_i if site.config.key?("co2") && site.config["co2"].key?("years")
 
-      yyyy_then = (yyyy_now - years_back).to_s
+      yyyy_then = yyyy_now - years_back
       month_then = month_now
+
+      # Catch if someone sets it back further than data exists.
+      years_back = 0 if yyyy_then < 1958
 
       if years_back.zero?
         # The NOAA data starts in March 1958.
-        yyyy_then = "1958"
-        month_then = "03"
+        yyyy_then = 1958
+        month_then = 3
       end
 
-      co2_then = co2_data[yyyy_then][month_then.to_s]["interpolated"].to_f
+      co2_then = co2_data[yyyy_then][month_then]["interpolated"].to_f
 
       # mm = "05"
 
-      co2_now = co2_data[yyyy_now.to_s][month_now.to_s]["interpolated"].to_f
+      co2_now = co2_data[yyyy_now][month_now]["interpolated"].to_f
 
       co2_increase = (co2_now - co2_then).round(2)
       co2_growth = (100 * co2_increase / co2_then).round(1)
