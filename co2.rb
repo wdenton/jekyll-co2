@@ -37,14 +37,13 @@ module Jekyll
     end
 
     def generate(site)
-      #
+      @site = site
+
       # See http://www.esrl.noaa.gov/gmd/ccgg/trends/ for additional details.
       mlo_csv_url = "ftp://aftp.cmdl.noaa.gov/products/trends/co2/co2_mm_mlo.csv"
 
       site_data_dir = site.source + "/_data/"
       mlo_csv = site_data_dir + "co2_mm_mlo.csv"
-
-      years_to_sample = 50
 
       unless Dir.exist?(site_data_dir)
         warn "Creating #{site_data_dir}"
@@ -86,30 +85,35 @@ module Jekyll
       # It will usually be the previous month, but it might be the
       # month before that (for example if it's 01 June, the May data
       # may not be processed yet, so we need to get April's).
-
       latest_year = (DateTime.now << 1).strftime("%Y").to_i # Subtracts one year
       latest_month = (DateTime.now << 1).strftime("%m") # Keep as string, need leading 0
 
-      month_num = ""
-      yyyy = ""
-
       if co2_data[latest_year][latest_month]
         # << 1 subtracts one month.
-        month_num = (DateTime.now << 1).strftime("%m")
-        yyyy = (DateTime.now << 1).strftime("%Y").to_i
+        month_now = (DateTime.now << 1).strftime("%m")
+        yyyy_now = (DateTime.now << 1).strftime("%Y").to_i
       else
-        month_num = (DateTime.now << 2).strftime("%m")
-        yyyy = (DateTime.now << 2).strftime("%Y").to_i
+        month_now = (DateTime.now << 2).strftime("%m")
+        yyyy_now = (DateTime.now << 2).strftime("%Y").to_i
       end
 
-      monthname = month_name(month_num)
+      years_back = 50 # TODO: Move this default somewhere more sensible
+      years_back = site.config["co2"]["years"].to_i if site.config.key?("co2") && site.config["co2"].key?("years")
 
-      yyyy_then = (yyyy - years_to_sample).to_s
-      co2_then = co2_data[yyyy_then][month_num.to_s]["interpolated"].to_f
+      yyyy_then = (yyyy_now - years_back).to_s
+      month_then = month_now
+
+      if years_back.zero?
+        # The NOAA data starts in March 1958.
+        yyyy_then = "1958"
+        month_then = "03"
+      end
+
+      co2_then = co2_data[yyyy_then][month_then.to_s]["interpolated"].to_f
 
       # mm = "05"
 
-      co2_now = co2_data[yyyy.to_s][month_num.to_s]["interpolated"].to_f
+      co2_now = co2_data[yyyy_now.to_s][month_now.to_s]["interpolated"].to_f
 
       co2_increase = (co2_now - co2_then).round(2)
       co2_growth = (100 * co2_increase / co2_then).round(1)
@@ -119,9 +123,9 @@ module Jekyll
           <h2>Atmospheric CO₂</h2>
           <div id="co2_inside">
              <p>
-              #{monthname} #{yyyy_then}: #{co2_then} ppm
+              #{month_name(month_then)} #{yyyy_then}: #{co2_then} ppm
               <br />
-              #{monthname} #{yyyy}: #{co2_now} ppm
+              #{month_name(month_now)} #{yyyy_now}: #{co2_now} ppm
             </p>
             <p>
               Increase: <span class="highlight">#{co2_increase} ppm</span>
