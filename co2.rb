@@ -77,7 +77,7 @@ module Jekyll
       co2_html = ""
 
       # Now we want to get the most recent month of data available
-      # It will never be the current month, because it's not over yet.
+      # It will never be the current month, which is not finished.
       # It will usually be the previous month, but it might be the
       # month before that (for example if it's 01 June, the May data
       # may not be processed yet, so we need to get April's).
@@ -85,10 +85,12 @@ module Jekyll
       latest_month = (DateTime.now << 1).strftime("%m").to_i
 
       if co2_data[latest_year][latest_month]
-        # << 1 subtracts one month.
-        month_now = (DateTime.now << 1).strftime("%m").to_i
-        yyyy_now = (DateTime.now << 1).strftime("%Y").to_i
+        month_now = latest_month # (DateTime.now << 1).strftime("%m").to_i
+        yyyy_now = latest_year # (DateTime.now << 1).strftime("%Y").to_i
       else
+        # << 2 subtracts two months.
+        # Simplest to handle it this way in case we need to go back to
+        # the previous year.
         month_now = (DateTime.now << 2).strftime("%m").to_i
         yyyy_now = (DateTime.now << 2).strftime("%Y").to_i
       end
@@ -99,18 +101,15 @@ module Jekyll
       yyyy_then = yyyy_now - years_back
       month_then = month_now
 
-      # Catch if someone sets it back further than data exists.
-      years_back = 0 if yyyy_then < 1958
-
-      if years_back.zero?
+      if years_back.zero? || yyyy_then < 1958
         # The NOAA data starts in March 1958.
+        # If years is 0, start there.
+        # Also start there is the user set it to go back before 1958.
         yyyy_then = 1958
         month_then = 3
       end
 
       co2_then = co2_data[yyyy_then][month_then]["interpolated"].to_f
-
-      # mm = "05"
 
       co2_now = co2_data[yyyy_now][month_now]["interpolated"].to_f
 
