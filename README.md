@@ -14,6 +14,19 @@ Download `co2.rb` and put it in your `_plugins` directory.  That's all!
 
 The CSV file downloaded is stored in your `_data` directory.  If you don't have one, it will be created.
 
+## Configuration
+
+By default the plugin will show CO₂ data from 50 years ago and compare it to today.
+
+Optionally, you can add a variable in your `_config.yml`, like this:
+
+    co2:
+      years: 10
+
+If `years` is 10, for example, it will show CO₂ from 10 years ago compared to today.
+
+If `years` is 0, it will show CO₂ from March 1958 (the earliest data available from Mauna Loa) compared to today.
+
 ## How to use
 
 The plugin creates an include file: `_includes/co2.html`.  Include it in a web page like this:
