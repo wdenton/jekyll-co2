@@ -35,65 +35,6 @@ module Jekyll
     # This generator should be passive with regard to its execution
     priority :low
 
-    # Turn a month number (02) into a name (February).
-    def month_name(mmm)
-      Date::MONTHNAMES[mmm.to_i]
-    end
-
-    # Path to _data/
-    def site_data_dir
-      @site.source + "/_data/"
-    end
-
-    def mlo_csv
-      site_data_dir + "co2_mm_mlo.csv"
-    end
-
-    def mlo_csv_url
-      # See http://www.esrl.noaa.gov/gmd/ccgg/trends/ for details.
-      "ftp://aftp.cmdl.noaa.gov/products/trends/co2/co2_mm_mlo.csv"
-    end
-
-    def make_data_dir_if_needed
-      return if Dir.exist?(site_data_dir)
-
-      warn "Creating #{site_data_dir}"
-      Dir.mkdir(site_data_dir)
-    end
-
-    def download_mlo_csv
-      # Download the data and store locally.
-      File.open(mlo_csv, "wt") do |file|
-        file << URI.open(mlo_csv_url).read.gsub(/^#.*\n/, "") # Strip all the comments.
-      end
-    end
-
-    def read_mlo_csv
-      # Set up the hash of hashes we'll use.
-      co2_data = Hash.new { |h, k| h[k] = {} }
-
-      CSV.foreach(mlo_csv, headers: true, header_converters: :symbol) do |row|
-        yyyy = row[:year].to_i
-        month_num = row[:month].to_i # January is 1, not 01
-        co2_data[yyyy][month_num] = {
-          # Throw out the other fields.
-          "interpolated" => row[:interpolated]
-        }
-      end
-      co2_data
-    end
-
-    def write_co2_includes_file(co2_html)
-      # Dump the little chunk of HTML to the _includes directory,
-      # where it can be included with {% include co2.html %} as
-      # needed.
-      co2_includes_file = @site.source + "/_includes/" + "co2.html"
-
-      File.open(co2_includes_file, "w") do |f|
-        f.write co2_html
-      end
-    end
-
     def generate(site)
       @site = site
 
@@ -176,6 +117,67 @@ module Jekyll
         write_co2_includes_file(co2_html)
       rescue StandardError => e
         warn "Cannot write to _includes/: #{e}"
+      end
+    end
+
+    private
+
+    # Turn a month number (02) into a name (February).
+    def month_name(mmm)
+      Date::MONTHNAMES[mmm.to_i]
+    end
+
+    # Path to _data/
+    def site_data_dir
+      @site.source + "/_data/"
+    end
+
+    def mlo_csv
+      site_data_dir + "co2_mm_mlo.csv"
+    end
+
+    def mlo_csv_url
+      # See http://www.esrl.noaa.gov/gmd/ccgg/trends/ for details.
+      "ftp://aftp.cmdl.noaa.gov/products/trends/co2/co2_mm_mlo.csv"
+    end
+
+    def make_data_dir_if_needed
+      return if Dir.exist?(site_data_dir)
+
+      warn "Creating #{site_data_dir}"
+      Dir.mkdir(site_data_dir)
+    end
+
+    def download_mlo_csv
+      # Download the data and store locally.
+      File.open(mlo_csv, "wt") do |file|
+        file << URI.open(mlo_csv_url).read.gsub(/^#.*\n/, "") # Strip all the comments.
+      end
+    end
+
+    def read_mlo_csv
+      # Set up the hash of hashes we'll use.
+      co2_data = Hash.new { |h, k| h[k] = {} }
+
+      CSV.foreach(mlo_csv, headers: true, header_converters: :symbol) do |row|
+        yyyy = row[:year].to_i
+        month_num = row[:month].to_i # January is 1, not 01
+        co2_data[yyyy][month_num] = {
+          # Throw out the other fields.
+          "interpolated" => row[:interpolated]
+        }
+      end
+      co2_data
+    end
+
+    def write_co2_includes_file(co2_html)
+      # Dump the little chunk of HTML to the _includes directory,
+      # where it can be included with {% include co2.html %} as
+      # needed.
+      co2_includes_file = @site.source + "/_includes/" + "co2.html"
+
+      File.open(co2_includes_file, "w") do |f|
+        f.write co2_html
       end
     end
   end
