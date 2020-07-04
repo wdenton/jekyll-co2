@@ -1,6 +1,8 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
+# rubocop:disable Style/AsciiComments
+
 # This file is part of Jekyll CO₂
 #
 # Jekyll CO₂ is free software: you can redistribute it and/or modify
@@ -17,6 +19,8 @@
 # along with Jekyll CO₂.  If not, see <http://www.gnu.org/licenses/>.
 #
 # Copyright 2014--2020 William Denton <wtd@pobox.com>
+
+# rubocop:enable Style/AsciiComments
 
 require "csv"
 require "date"
@@ -36,32 +40,35 @@ module Jekyll
       Date::MONTHNAMES[mmm.to_i]
     end
 
-    def generate(site)
-      @site = site
+    # Path to _data/
+    def site_data_dir
+      @site.source + "/_data/"
+    end
 
-      # See http://www.esrl.noaa.gov/gmd/ccgg/trends/ for additional details.
-      mlo_csv_url = "ftp://aftp.cmdl.noaa.gov/products/trends/co2/co2_mm_mlo.csv"
+    def mlo_csv
+      site_data_dir + "co2_mm_mlo.csv"
+    end
 
-      site_data_dir = site.source + "/_data/"
-      mlo_csv = site_data_dir + "co2_mm_mlo.csv"
+    def mlo_csv_url
+      # See http://www.esrl.noaa.gov/gmd/ccgg/trends/ for details.
+      "ftp://aftp.cmdl.noaa.gov/products/trends/co2/co2_mm_mlo.csv"
+    end
 
-      unless Dir.exist?(site_data_dir)
-        warn "Creating #{site_data_dir}"
-        Dir.mkdir(site_data_dir)
-      end
+    def make_data_dir_if_needed
+      return if Dir.exist?(site_data_dir)
 
+      warn "Creating #{site_data_dir}"
+      Dir.mkdir(site_data_dir)
+    end
+
+    def download_mlo_csv
       # Download the data and store locally.
-      begin
-        File.open(mlo_csv, "wt") do |file|
-          file << URI.open(mlo_csv_url).read.gsub(/^#.*\n/, "") # Strip all the comments.
-        end
-      rescue StandardError => e
-        # TODO:  This doesn't work right.  Make it work even if NOAA site is down.
-        warn "Error on #{mlo_csv_url}: #{e}"
-        warn "Could not download data: using stored file"
-        exit 0
+      File.open(mlo_csv, "wt") do |file|
+        file << URI.open(mlo_csv_url).read.gsub(/^#.*\n/, "") # Strip all the comments.
       end
+    end
 
+    def read_mlo_csv
       # Set up the hash of hashes we'll use.
       co2_data = Hash.new { |h, k| h[k] = {} }
 
@@ -73,8 +80,35 @@ module Jekyll
           "interpolated" => row[:interpolated]
         }
       end
+      co2_data
+    end
 
-      co2_html = ""
+    def write_co2_includes_file(co2_html)
+      # Dump the little chunk of HTML to the _includes directory,
+      # where it can be included with {% include co2.html %} as
+      # needed.
+      co2_includes_file = @site.source + "/_includes/" + "co2.html"
+
+      File.open(co2_includes_file, "w") do |f|
+        f.write co2_html
+      end
+    end
+
+    def generate(site)
+      @site = site
+
+      make_data_dir_if_needed
+
+      begin
+        download_mlo_csv
+      rescue StandardError => e
+        # TODO:  This doesn't work right.  Make it work even if NOAA site is down.
+        warn "Error on #{mlo_csv_url}: #{e}"
+        warn "Could not download data: using stored file"
+        exit 0
+      end
+
+      @co2_data = read_mlo_csv
 
       # Now we want to get the most recent month of data available
       # It will never be the current month, which is not finished.
@@ -84,7 +118,7 @@ module Jekyll
       latest_year = (DateTime.now << 1).strftime("%Y").to_i # Subtracts one year
       latest_month = (DateTime.now << 1).strftime("%m").to_i
 
-      if co2_data[latest_year][latest_month]
+      if @co2_data[latest_year][latest_month]
         month_now = latest_month
         yyyy_now = latest_year
       else
@@ -96,7 +130,7 @@ module Jekyll
       end
 
       years_back = 50 # TODO: Move this default somewhere more sensible
-      years_back = site.config["co2"]["years"].to_i if site.config.key?("co2") && site.config["co2"].key?("years")
+      years_back = @site.config["co2"]["years"].to_i if @site.config.key?("co2") && @site.config["co2"].key?("years")
 
       yyyy_then = yyyy_now - years_back
       month_then = month_now
@@ -109,8 +143,8 @@ module Jekyll
         month_then = 3
       end
 
-      co2_then = co2_data[yyyy_then][month_then]["interpolated"].to_f
-      co2_now = co2_data[yyyy_now][month_now]["interpolated"].to_f
+      co2_then = @co2_data[yyyy_then][month_then]["interpolated"].to_f
+      co2_now = @co2_data[yyyy_now][month_now]["interpolated"].to_f
       co2_increase = (co2_now - co2_then).round(2)
       co2_growth = (100 * co2_increase / co2_then).round(1)
 
@@ -130,26 +164,18 @@ module Jekyll
             </p>
 
           <span class="co2_source">
-          Sources:
-          <a href="http://www.esrl.noaa.gov/gmd/ccgg/trends/">data</a>,
+          At Mauna Loa:
+          <a href="https://www.esrl.noaa.gov/gmd/ccgg/trends/">data</a>,
           <a href="https://github.com/wdenton/jekyll-co2">code</a>.
           </span>
         </div>
         </div>
       HTML
 
-      # Dump the little chunk of HTML to the _includes directory,
-      # where it can be included with {% include co2.html %} as
-      # needed.
-
-      co2_includes_file = site.source + "/_includes/" + "co2.html"
-
       begin
-        File.open(co2_includes_file, "w") do |f|
-          f.write co2_html
-        end
+        write_co2_includes_file(co2_html)
       rescue StandardError => e
-        Jekyll.logger warn "Cannot write to #{co2_includes_file}: #{e}"
+        warn "Cannot write to _includes/: #{e}"
       end
     end
   end
