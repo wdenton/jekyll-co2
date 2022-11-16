@@ -53,6 +53,10 @@ You could style it with CSS like this:
       font-size: smaller;
     }
 
+## To try
+
+* [UnicodePlot](https://github.com/red-data-tools/unicode_plot.rb)
+
 ## License
 
 GPL v3.  See [LICENSE](LICENSE).
