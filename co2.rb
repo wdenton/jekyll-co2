@@ -39,15 +39,7 @@ module Jekyll
       @site = site
 
       make_data_dir_if_needed
-
-      begin
-        download_mlo_csv
-      rescue StandardError => e
-        # TODO:  This doesn't work right.  Make it work even if NOAA site is down.
-        warn "Error on #{mlo_csv_url}: #{e}"
-        warn "Could not download data: using stored file"
-        exit 0
-      end
+      download_mlo_csv
 
       @co2_data = read_mlo_csv
 
@@ -84,8 +76,8 @@ module Jekyll
         month_then = 3
       end
 
-      co2_then = @co2_data[yyyy_then][month_then]["interpolated"].to_f
-      co2_now = @co2_data[yyyy_now][month_now]["interpolated"].to_f
+      co2_then = @co2_data[yyyy_then][month_then]["average"].to_f
+      co2_now = @co2_data[yyyy_now][month_now]["average"].to_f
       co2_increase = (co2_now - co2_then).round(2)
       co2_growth = (100 * co2_increase / co2_then).round(1)
 
@@ -129,11 +121,11 @@ module Jekyll
 
     # Path to _data/
     def site_data_dir
-      @site.source + "/_data/"
+      "#{@site.source}/_data"
     end
 
     def mlo_csv
-      site_data_dir + "co2_mm_mlo.csv"
+      "#{site_data_dir}/co2_mm_mlo.csv"
     end
 
     def mlo_csv_url
@@ -151,8 +143,13 @@ module Jekyll
     def download_mlo_csv
       # Download the data and store locally.
       File.open(mlo_csv, "wt") do |file|
-        file << URI.open(mlo_csv_url).read.gsub(/^#.*\n/, "") # Strip all the comments.
+        file << URI.parse(mlo_csv_url).open.read.gsub(/^#.*\n/, "") # Strip all the comments.
       end
+    rescue StandardError => e
+      # TODO:  This doesn't work right.  Make it work even if NOAA site is down.
+      warn "Error on #{mlo_csv_url}: #{e}"
+      warn "Could not download data: using stored file"
+      # exit 0
     end
 
     def read_mlo_csv
@@ -164,7 +161,7 @@ module Jekyll
         month_num = row[:month].to_i # January is 1, not 01
         co2_data[yyyy][month_num] = {
           # Throw out the other fields.
-          "interpolated" => row[:interpolated]
+          "average" => row[:average]
         }
       end
       co2_data
@@ -174,11 +171,8 @@ module Jekyll
       # Dump the little chunk of HTML to the _includes directory,
       # where it can be included with {% include co2.html %} as
       # needed.
-      co2_includes_file = @site.source + "/_includes/" + "co2.html"
-
-      File.open(co2_includes_file, "w") do |f|
-        f.write co2_html
-      end
+      co2_includes_file = "#{@site.source}/_includes/co2.html"
+      File.write(co2_includes_file, co2_html)
     end
   end
 end
